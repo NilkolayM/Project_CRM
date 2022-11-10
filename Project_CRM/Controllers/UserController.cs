@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Data;
 using Project_CRM.Models;
+using System.Runtime.Intrinsics.X86;
 
 namespace Project_CRM.Controllers
 {
@@ -135,6 +136,39 @@ namespace Project_CRM.Controllers
             return new JsonResult(table);
         }
 
+        [HttpDelete]
+        public JsonResult Delete(Guid User_Guid)
+        {
+            string query = @"
+                            delete from dbo.User_table
+                            where User_ID = @User_ID
+                            ";
+
+            //User_ID, User_Name, User_Login, User_Password, User_Phone_num, User_email
+
+            DataTable table = new DataTable();
+
+            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con");
+
+            SqlDataReader mySQLreader;
+
+            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            {
+                myCon.Open();
+                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                {      
+
+                    myCommand.Parameters.Add(new SqlParameter("@User_ID", User_Guid));
+                    mySQLreader = myCommand.ExecuteReader();
+                    table.Load(mySQLreader);
+                    mySQLreader.Close();
+                    myCon.Close();
+
+                }
+
+            }
+            return new JsonResult(table);
+        }
 
     }
 }
