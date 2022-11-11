@@ -19,6 +19,36 @@ namespace Project_CRM.Controllers
             _configuration = configuration;
         }
 
+        [Route("UserExist")]
+        [HttpGet]
+        public JsonResult UserExist(string u_password, string u_login)
+        {
+            string query = @"
+                SELECT User_ID, User_Name, User_Phone_num, User_email
+                FROM dbo.User_table WHERE User_Login='" + u_login + "' AND User_Password="+u_password;
+
+            DataTable table = new DataTable();
+
+            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con");
+
+            SqlDataReader mySQLreader;
+
+            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            {
+                myCon.Open();
+                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                {
+                    mySQLreader = myCommand.ExecuteReader();
+                    table.Load(mySQLreader);
+                    mySQLreader.Close();
+                    myCon.Close();
+                }
+
+            }
+            return new JsonResult(table);
+        }
+
+
         [HttpGet]
         public JsonResult get()
         {
@@ -92,7 +122,7 @@ namespace Project_CRM.Controllers
             return new JsonResult(table);
         }
 
-
+       // [Route("ChangeRecord")]
         [HttpPut]
         public JsonResult put(User user1)
         {
