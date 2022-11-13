@@ -50,7 +50,7 @@ namespace Project_CRM.Controllers
 
 
         [HttpGet]
-        public JsonResult get()
+        public JsonResult Get()
         {
             string query = @"
                 select User_ID, User_Name, User_Login, User_Password, User_Phone_num, User_email from
@@ -80,7 +80,7 @@ namespace Project_CRM.Controllers
         }
 
         [HttpPost]
-        public JsonResult post(User user1)
+        public JsonResult Post(User user1)
         {
             string query = @"
                             insert into dbo.User_table
@@ -124,7 +124,7 @@ namespace Project_CRM.Controllers
 
        // [Route("ChangeRecord")]
         [HttpPut]
-        public JsonResult put(User user1)
+        public JsonResult Put(User user1)
         {
             string query = @"
                             update dbo.User_table
