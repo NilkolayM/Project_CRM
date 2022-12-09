@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Data;
 using Project_CRM.Models;
 using System.Runtime.Intrinsics.X86;
+using Newtonsoft.Json;
 
 namespace Project_CRM.Controllers
 {
@@ -23,9 +24,8 @@ namespace Project_CRM.Controllers
         [HttpGet]
         public JsonResult UserExist(string u_password, string u_login)
         {
-            string query = @"
-                SELECT User_ID, User_Name, User_Phone_num, User_email
-                FROM dbo.User_table WHERE User_Login='" + u_login + "' AND User_Password="+u_password;
+
+            string query = @"SELECT Count(1) as N FROM dbo.User_table WHERE User_Login= '" + u_login+"' AND User_Password= '" + u_password+ "'";
 
             DataTable table = new DataTable();
 
@@ -45,7 +45,13 @@ namespace Project_CRM.Controllers
                 }
 
             }
-            return new JsonResult(table);
+
+            if (table.Rows[0][0].ToString() == "1" ) return new JsonResult("succes");
+            else
+            {
+                return new JsonResult("not_a_user");
+            }
+            
         }
 
 
@@ -193,7 +199,7 @@ namespace Project_CRM.Controllers
                     table.Load(mySQLreader);
                     mySQLreader.Close();
                     myCon.Close();
-
+                    
                 }
 
             }
