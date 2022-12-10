@@ -46,7 +46,7 @@ namespace Project_CRM.Controllers
 
             }
 
-            if (table.Rows[0][0].ToString() == "1" ) return new JsonResult("succes");
+            if (table.Rows[0][0].ToString() == "1" ) return new JsonResult("success");
             else
             {
                 return new JsonResult("not_a_user");
