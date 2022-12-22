@@ -5,27 +5,32 @@ namespace Project_CRM.Models
 {
     public class SheduleCell
     {
-        public Guid Id { get; set; }
-        public byte ServiceId {get; set;}
+        public Guid Cell_ID { get; set; }
+
+        public Guid Service_ID {get; set;}
 
         public string Place { get; set;}
+
         public DateTime CellDateTime { get; set; }
 
-        public Guid Employee { get; set; }
+        public Guid Employee_ID { get; set; }
 
-        public Guid Client { get; set; }
+        public byte Status { get; set; }
 
-        public bool is_done { get; set; }
+        public Guid Record_ID { get; set; }
 
-        public SheduleCell(in DateTime date)
+        public Guid Client_ID { get; set; }
+
+        public SheduleCell()
         {
-            Id = Guid.NewGuid();
-            ServiceId = 0;
+            Cell_ID = Guid.NewGuid();
+            Service_ID = Guid.Empty;
             Place = "none";
-            CellDateTime = date;
-            Employee = Guid.Empty;
-            Client = Guid.Empty;
-            is_done = false;
+            CellDateTime = DateTime.Now;
+            Employee_ID = Guid.Empty;
+            Status = 0x0;
+            Record_ID = Guid.Empty;
+            Client_ID = Guid.Empty;
         }
     }
    

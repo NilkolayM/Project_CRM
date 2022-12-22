@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Data.SqlClient;
+using Project_CRM.Models;
 
 namespace Project_CRM.Controllers
 {
@@ -21,8 +22,8 @@ namespace Project_CRM.Controllers
         public JsonResult get()
         {
             string query = @"
-                select Cell_ID, Service_ID, Place, Date_time, Employee_ID, Client_ID from
-                dbo.Shedule_Cell
+                select Cell_ID, Service_ID, Place, Date_time, Employe_ID, Status, Record_ID, Client_ID from
+                dbo.Shedule_Cell order by Date_time
                 ";
 
             DataTable table = new DataTable();
@@ -40,7 +41,6 @@ namespace Project_CRM.Controllers
                     table.Load(mySQLreader);
                     mySQLreader.Close();
                     myCon.Close();
-
                 }
 
             }
