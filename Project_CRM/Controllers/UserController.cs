@@ -24,8 +24,8 @@ namespace Project_CRM.Controllers
         [HttpGet]
         public JsonResult UserExist(string u_password, string u_login)
         {
-
-            string query = @"SELECT Count(1) as N FROM dbo.User_table WHERE User_Login= '" + u_login+"' AND User_Password= '" + u_password+ "'";
+            //string query = @"SELECT Count(1) as N FROM dbo.User_table WHERE User_Login= '" + u_login+"' AND User_Password= '" + u_password+ "'";
+            string query = @"SELECT User_ID as token FROM dbo.User_table WHERE User_Login= '" + u_login+"' AND User_Password= '" + u_password+ "'";
 
             DataTable table = new DataTable();
 
@@ -46,12 +46,19 @@ namespace Project_CRM.Controllers
 
             }
 
-            if (table.Rows[0][0].ToString() == "1" ) return new JsonResult("success");
+
+            if (table.Rows.Count == 1) return new JsonResult(table.Rows[0][0].ToString());
             else
             {
                 return new JsonResult("not_a_user");
             }
-            
+
+            //if (table.Rows[0][0].ToString() == "1" ) return new JsonResult("success");
+            //else
+            //{
+            //    return new JsonResult("not_a_user");
+            //}
+
         }
 
 
@@ -138,7 +145,7 @@ namespace Project_CRM.Controllers
                             where User_ID = @User_ID
                             ";
 
-          //User_ID, User_Name, User_Login, User_Password, User_Phone_num, User_email
+            //User_ID, User_Name, User_Login, User_Password, User_Phone_num, User_email
 
             DataTable table = new DataTable();
 
