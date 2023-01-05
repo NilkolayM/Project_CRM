@@ -20,54 +20,13 @@ namespace Project_CRM.Controllers
             _configuration = configuration;
         }
 
-        [Route("UserExist")]
-        [HttpGet]
-        public JsonResult UserExist(string u_password, string u_login)
-        {
-            //string query = @"SELECT Count(1) as N FROM dbo.User_table WHERE User_Login= '" + u_login+"' AND User_Password= '" + u_password+ "'";
-            string query = @"SELECT User_ID as token FROM dbo.User_table WHERE User_Login= '" + u_login+"' AND User_Password= '" + u_password+ "'";
-
-            DataTable table = new DataTable();
-
-            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con");
-
-            SqlDataReader mySQLreader;
-
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
-            {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    mySQLreader = myCommand.ExecuteReader();
-                    table.Load(mySQLreader);
-                    mySQLreader.Close();
-                    myCon.Close();
-                }
-
-            }
-
-
-            if (table.Rows.Count == 1) return new JsonResult(table.Rows[0][0].ToString());
-            else
-            {
-                return new JsonResult("not_a_user");
-            }
-
-            //if (table.Rows[0][0].ToString() == "1" ) return new JsonResult("success");
-            //else
-            //{
-            //    return new JsonResult("not_a_user");
-            //}
-
-        }
-
 
         [HttpGet]
         public JsonResult Get()
         {
             string query = @"
                 select User_ID, User_Name, User_Login, User_Password, User_Phone_num, User_email from
-                dbo.User_table
+                dbo.Client
                 ";
 
             DataTable table = new DataTable();
