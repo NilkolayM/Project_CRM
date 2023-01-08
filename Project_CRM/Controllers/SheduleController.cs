@@ -70,7 +70,7 @@ namespace Project_CRM.Controllers
         /// </returns>
         private byte UpdateClientToken(ref Guid token)
         {
-            string query = @"       if ((select Count(*) FROM dbo.Client_Active_Session WHERE Token = @UserToken) != 1) select 0 as answer
+            string query = @"       if ((select Count(*) FROM dbo.Client_Active_Session WHERE Token = @Token) != 1) select 0 as answer
                                     else begin
                                     declare @date datetime = (select Last_Updated FROM dbo.Client_Active_Session WHERE Token = @Token)
 				                    declare @now datetime = GETUTCDATE()
@@ -159,6 +159,12 @@ namespace Project_CRM.Controllers
             Guid uid;
             if (Guid.TryParse(table.Rows[0][0].ToString(), out uid)) return uid; else return Guid.Empty;
 
+        }
+
+        public class Result : object
+        {
+            public Guid token = Guid.Empty;
+            public string status = "";
         }
 
         [Route("UserAssign")]
@@ -252,23 +258,27 @@ namespace Project_CRM.Controllers
                 if (table.Rows.Count != 1) return new JsonResult("err");
                 else
                 {
-                    TokenController TC = new TokenController(_configuration);
+                    Result res = new Result();
+                    res.token = token;
 
                     switch (table.Rows[0][0])
                     {
                         case 0:
                             {
-                                return_msg = new JsonResult("sign_success");
+                                res.status = "sign_success";
+                                return_msg = new JsonResult(res);
                             }
                             break;
                         case 1:
                             {
-                                return_msg = new JsonResult("unsign_success");
+                                res.status = "unsign_success";
+                                return_msg = new JsonResult(res);
                             }
                             break;
                         case 2:
                             {
-                                return_msg = new JsonResult("cant_sign");
+                                res.status = "cant_sign";
+                                return_msg = new JsonResult(res);
                             }
                             break;
                         case 3:

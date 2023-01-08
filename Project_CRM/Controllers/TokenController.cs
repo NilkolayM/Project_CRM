@@ -57,8 +57,8 @@ namespace Project_CRM.Controllers
         /// <br/>
         /// "wrong_password" - неверный пароль
         /// <br/>
-        /// если клиент - возврат токена
-        /// если сотрудник - возврат токена и роли
+        /// если клиент - возврат токена и роли = null
+        /// если сотрудник - возврат токена и роли цифрой больше 1
         /// </returns>
         [Route("Autorization")]
         [HttpGet]
@@ -299,7 +299,38 @@ namespace Project_CRM.Controllers
             }
  
         }
-        
+
+        [Route("Delete")]
+        [HttpDelete]
+        public void Dismiss(Guid token)
+        {
+            string query = @"DELETE FROM dbo.Client_Active_Session where Token = @UserToken
+                             DELETE FROM dbo.Employee_active_session where Token = @UserToken";
+
+            DataTable table = new DataTable();
+
+            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con");
+
+            SqlDataReader mySQLreader;
+                
+            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            {
+                myCon.Open();
+                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                {
+
+                    List<SqlParameter> list = new List<SqlParameter>();
+                    list.Add(new SqlParameter("@UserToken", token));
+                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>());
+
+                    mySQLreader = myCommand.ExecuteReader();
+                    table.Load(mySQLreader);
+                    mySQLreader.Close();
+
+                }
+                myCon.Close();
+            }
+        }
 
     }
 }
