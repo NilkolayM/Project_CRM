@@ -10,13 +10,14 @@ namespace Project_CRM.Controllers
     public class TokenController : ControllerBase
     {
 
-        private readonly IConfiguration _configuration;
+        private readonly IConfiguration _configuration; //Правила взаимодействия с БД
 
         public TokenController(IConfiguration configuration)
         {
-            _configuration = configuration;
+            _configuration = configuration; //Определение взаимодействия
         }
 
+        // SQL команда возвращающая токен клиента на основании пароля и логина 
         private string ClientA = @"if ((select Count(*) FROM dbo.Client WHERE User_Login=@UserLogin AND User_Password=@UserPassword) = 1)
 		                                    begin
 		                                    declare @User uniqueidentifier = (select User_ID FROM dbo.Client WHERE User_Login=@UserLogin AND User_Password=@UserPassword)
@@ -32,6 +33,7 @@ namespace Project_CRM.Controllers
 		                                    select @Token as answer, null as role
 	                                        end";
 
+        // SQL команда возвращающая токен сотрудника на основании пароля и логина 
         private string EmployeeA = @"if ((select Count(*) FROM dbo.Employee WHERE User_Login=@UserLogin AND User_Password=@UserPassword) = 1)
 		                                    begin
 		                                    declare @User uniqueidentifier = (select Employee_ID FROM dbo.Employee WHERE User_Login=@UserLogin AND User_Password=@UserPassword)
@@ -46,7 +48,6 @@ namespace Project_CRM.Controllers
 			                                        end
 		                                    select @Token as token, (select Employee_role FROM dbo.Employee WHERE Employee_ID=@User) as role
 	                                        end";
-
 
         /// <summary>
         /// Функция ответственная за получение токена путем авторизации
@@ -65,56 +66,57 @@ namespace Project_CRM.Controllers
 
         public JsonResult Autorization(string password, string login)
         {
+            //SQL Запрос на поиск пользователя
             string query = @" if ((select Count(*) FROM dbo.Client WHERE User_Login=@UserLogin) = 1) select 1 as answer             
                               else 
                               if ((select Count(*) FROM dbo.Employee WHERE dbo.Employee.User_Login = @UserLogin) = 1) select 2 as answer
                               else 
                               select 0 as answer";
 
-            DataTable table = new DataTable();
+            DataTable table = new DataTable(); // Создание таблицы хранения результатов запроса
 
-            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con");
+            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con"); // Определение способа взаимодействия с БД
 
-            SqlDataReader mySQLreader;
+            SqlDataReader mySQLreader; // Класс отвечающий за получение данных из БД
 
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            using (SqlConnection myCon = new SqlConnection(sqlDataSource)) // Создание класса взаимодействующего с БД
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                myCon.Open(); // Подключенме к БД 
+                using (SqlCommand myCommand = new SqlCommand(query, myCon)) // Создание SQL запроса
                 {
 
-                    List<SqlParameter> list = new List<SqlParameter>();
-                    list.Add(new SqlParameter("@UserLogin", login));
-                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>());
+                    List<SqlParameter> list = new List<SqlParameter>(); // Создание списка параметров SQL команды
+                    list.Add(new SqlParameter("@UserLogin", login)); // Добавить новый параметр
+                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>()); // Добавить параметры к команде
 
-                    mySQLreader = myCommand.ExecuteReader();
-                    table.Load(mySQLreader);
+                    mySQLreader = myCommand.ExecuteReader(); // Выполнить SQL Запрос и получить неформатрированные данные
+                    table.Load(mySQLreader);         // Отформатировать данные
                     mySQLreader.Close();
 
                 }
-                myCon.Close();
+                myCon.Close();         // Отключение от БД
             }
 
             JsonResult return_msg;
 
-            if (table.Rows.Count != 1) return new JsonResult("err");
+            if (table.Rows.Count != 1) return new JsonResult("err"); // Если данных не получено, выдать ошибку
             else
             {
                 switch (table.Rows[0][0])
                 {
                     case 1:
                         {
-                            return_msg = NewToken(ClientA, password, login);
+                            return_msg = NewToken(ClientA, password, login); // Был найден пользователь - клиент 
                         }
                         break;
                     case 2:
                         {
-                            return_msg = NewToken(EmployeeA, password, login);
+                            return_msg = NewToken(EmployeeA, password, login); // Был найден пользователь - сотрудник
                         }
                         break;
                     default:
                         {
-                            return_msg = new JsonResult("not_a_user");
+                            return_msg = new JsonResult("not_a_user"); //Пользователь не найден
                         }
                         break;
                 }
@@ -125,42 +127,43 @@ namespace Project_CRM.Controllers
         private JsonResult NewToken(string query, string password, string login)
         {
 
-            DataTable table = new DataTable();
+            DataTable table = new DataTable(); // Создание таблицы хранения результатов запроса
 
-            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con");
+            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con"); // Определение способа взаимодействия с БД
 
-            SqlDataReader mySQLreader;
+            SqlDataReader mySQLreader; // Класс отвечающий за получение данных из БД
 
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            using (SqlConnection myCon = new SqlConnection(sqlDataSource)) // Создание класса взаимодействующего с БД
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                myCon.Open(); // Подключенме к БД
+                using (SqlCommand myCommand = new SqlCommand(query, myCon)) // Создание SQL запроса
                 {
+                     
+                    List<SqlParameter> list = new List<SqlParameter>(); // Создание списка параметров SQL команды
+                    list.Add(new SqlParameter("@UserLogin", login)); // Добавить новый параметр
+                    list.Add(new SqlParameter("@UserPassword", password)); // Добавить новый параметр
+                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>()); // Добавить параметры к команде
 
-                    List<SqlParameter> list = new List<SqlParameter>();
-                    list.Add(new SqlParameter("@UserLogin", login));
-                    list.Add(new SqlParameter("@UserPassword", password));
-                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>());
-                    
-                    mySQLreader = myCommand.ExecuteReader();
-                    table.Load(mySQLreader);
+                    mySQLreader = myCommand.ExecuteReader(); // Выполнить SQL Запрос и получить неформатрированные данные
+                    table.Load(mySQLreader); // Отформатировать данные
                     mySQLreader.Close();
                     
                 }
-                myCon.Close();
+                myCon.Close(); // Отключение от БД
             }
 
-            if (table.Rows.Count == 1) 
+            if (table.Rows.Count == 1) // Если было возвращено значение, то оно содержит новый токен и роль пользователя
             {
                 return new JsonResult(table);
             }
-            else
+            else // Иначе пароль пользователя не верен
             {
                 return new JsonResult("wrong_password");
             }
 
         }
 
+        //SQL запрос для обновления токена клиента
         string ClientT = @"     declare @date datetime = (select Last_Updated FROM dbo.Client_Active_Session WHERE Token = @Token)
 				                declare @now datetime = GETUTCDATE()
 				                if (DATEDIFF(MINUTE, @date, @now) < 5) begin
@@ -172,7 +175,7 @@ namespace Project_CRM.Controllers
 														else begin
 																select 0 as answer
 															 end";
-
+        //SQL запрос для обновления токена сотрудника
         string EmployeeT = @"   declare @date datetime = (select Last_Updated FROM dbo.Employee_active_session WHERE Token = @Token)
 				                declare @now datetime = GETUTCDATE()
 				                if (DATEDIFF(MINUTE, @date, @now) < 5) begin
@@ -184,7 +187,6 @@ namespace Project_CRM.Controllers
 														else begin
 																select 0 as answer
 															 end";
-        
 
         /// <summary>
         /// Функция ответственная за обновление токена
@@ -201,134 +203,143 @@ namespace Project_CRM.Controllers
         [HttpGet]
         public JsonResult Update(Guid token)
         {
-
+            //SQL запрос на поиск пользователя
             string query = @"if ((select Count(*) FROM dbo.Client_Active_Session WHERE Token = @UserToken) = 1) select 1 as answer             
                               else 
                               if ((select Count(*) FROM dbo.Employee_active_session WHERE Token = @UserToken) = 1) select 2 as answer
                               else 
                               select 0 as answer";
 
-            DataTable table = new DataTable();
+            DataTable table = new DataTable(); // Создание таблицы хранения результатов запроса
 
-            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con");
+            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con"); // Определение способа взаимодействия с БД
 
-            SqlDataReader mySQLreader;
+            SqlDataReader mySQLreader; // Класс отвечающий за получение данных из БД
 
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
-            {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+            using (SqlConnection myCon = new SqlConnection(sqlDataSource)) // Создание класса взаимодействующего с БД
+            { 
+                myCon.Open(); // Подключенме к БД
+                using (SqlCommand myCommand = new SqlCommand(query, myCon)) // Создание SQL запроса
                 {
 
-                    List<SqlParameter> list = new List<SqlParameter>();
-                    list.Add(new SqlParameter("@UserToken", token));
-                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>());
+                    List<SqlParameter> list = new List<SqlParameter>(); // Создание списка параметров SQL команды
+                    list.Add(new SqlParameter("@UserToken", token)); // Добавить новый параметр
+                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>()); // Добавить параметры к команде
 
-                    mySQLreader = myCommand.ExecuteReader();
-                    table.Load(mySQLreader);
+                    mySQLreader = myCommand.ExecuteReader(); // Выполнить SQL Запрос и получить неформатрированные данные
+                    table.Load(mySQLreader); // Отформатировать данные
                     mySQLreader.Close();
 
                 }
-                myCon.Close();
+                myCon.Close();  // Отключение от БД
             }
 
             JsonResult return_msg;
 
-            if (table.Rows.Count != 1) return new JsonResult("err");
+            if (table.Rows.Count != 1) return new JsonResult("err"); // Данных не пришло - выдать ошибку
             else
             {
                 switch (table.Rows[0][0])
                 {
                     case 1:
                         {
-                            return_msg = GetToken(ClientT, token);
+                            return_msg = GetToken(ClientT, token); // Пользователь - клиент
                         }
                         break;
                     case 2:
                         {
-                            return_msg = GetToken(EmployeeT, token);
+                            return_msg = GetToken(EmployeeT, token); // Пользователь - сотрудник
                         }
                         break;
                     default:
                         {
-                            return_msg = new JsonResult("not_a_user");
+                            return_msg = new JsonResult("not_a_user"); // Не пользователь
                         }
                         break;
                 }
             }
             return return_msg;
         }
-
+        
+        /// <summary>
+        /// Получение токена из команды и запроса
+        /// </summary>
         private JsonResult GetToken(string query, Guid token)
         {   
 
-            DataTable table = new DataTable();
+            DataTable table = new DataTable(); // Создание таблицы хранения результатов запроса
 
-            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con");
+            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con"); // Определение способа взаимодействия с БД
 
-            SqlDataReader mySQLreader;
+            SqlDataReader mySQLreader; // Класс отвечающий за получение данных из БД
 
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            using (SqlConnection myCon = new SqlConnection(sqlDataSource)) // Создание класса взаимодействующего с БД
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                myCon.Open(); // Подключенме к БД
+                using (SqlCommand myCommand = new SqlCommand(query, myCon)) // Создание SQL запроса
                 {
 
-                    List<SqlParameter> list = new List<SqlParameter>();
-                    list.Add(new SqlParameter("@Token", token));
-                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>());
-                    mySQLreader = myCommand.ExecuteReader();
-                    table.Load(mySQLreader);
+                    List<SqlParameter> list = new List<SqlParameter>(); // Создание списка параметров SQL команды
+                    list.Add(new SqlParameter("@Token", token)); // Добавить новый параметр
+                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>()); // Добавить параметры к команде
+                    mySQLreader = myCommand.ExecuteReader(); // Выполнить SQL Запрос и получить неформатрированные данные
+                    table.Load(mySQLreader); // Отформатировать данные
                     mySQLreader.Close();
 
                 }
-                myCon.Close();
+                myCon.Close(); // Отключение от БД
             }
 
-            if (table.Rows.Count != 1) return new JsonResult("err");
+            if (table.Rows.Count != 1) return new JsonResult("err"); // Если данных не получено, выдать ошибку
             else
             {
-                if(table.Rows[0][0].ToString() == "0")
+                if(table.Rows[0][0].ToString() == "0") // Если пришел 0, то токен не коректен - выдать ошибку
                 {    
                    return new JsonResult("invalid_token");
                 }
-                else
+                else //В ином случае нужно вернуть новый токен
                 {
-                   return new JsonResult(table.Rows[0][0].ToString());
+                   return new JsonResult(table.Rows[0][0].ToString()); 
                 }
             }
  
         }
 
+        /// <summary>
+        /// Функция ответственная за удаление токена из базы данных токена
+        /// </summary>
+        /// <param name="token"></param>
         [Route("Delete")]
         [HttpDelete]
         public void Dismiss(Guid token)
         {
+
+            //SQL запрос в виде команды
             string query = @"DELETE FROM dbo.Client_Active_Session where Token = @UserToken
                              DELETE FROM dbo.Employee_active_session where Token = @UserToken";
 
-            DataTable table = new DataTable();
+            DataTable table = new DataTable(); // Создание таблицы хранения результатов запроса
 
-            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con");
+            string sqlDataSource = _configuration.GetConnectionString("CRM_app_con"); // Определение способа взаимодействия с БД
 
-            SqlDataReader mySQLreader;
+            SqlDataReader mySQLreader; // Класс отвечающий за получение данных из БД
                 
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            using (SqlConnection myCon = new SqlConnection(sqlDataSource)) // Создание класса взаимодействующего с БД
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                myCon.Open(); // Подключенме к БД
+                using (SqlCommand myCommand = new SqlCommand(query, myCon)) // Создание SQL запроса
                 {
 
-                    List<SqlParameter> list = new List<SqlParameter>();
-                    list.Add(new SqlParameter("@UserToken", token));
-                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>());
+                    List<SqlParameter> list = new List<SqlParameter>(); // Создание списка параметров SQL команды
+                    list.Add(new SqlParameter("@UserToken", token)); // Добавить новый параметр
+                    myCommand.Parameters.AddRange(list.ToArray<SqlParameter>()); // Добавить параметры к команде
 
-                    mySQLreader = myCommand.ExecuteReader();
-                    table.Load(mySQLreader);
+                    mySQLreader = myCommand.ExecuteReader(); // Выполнить SQL Запрос и получить неформатрированные данные
+                    table.Load(mySQLreader); // Отформатировать данные
                     mySQLreader.Close();
 
                 }
-                myCon.Close();
+                myCon.Close(); //Отключение от БД
             }
         }
 
